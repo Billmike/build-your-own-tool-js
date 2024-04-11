@@ -29,21 +29,25 @@ function countLines(fileContent, isFile = true) {
   }
 }
 
-function countWords(filename) {
+function countWords(fileContent, isFile = true) {
   try {
-    const fileContentData = fs.readFileSync(filename, "utf8");
+    const fileContentData = isFile
+      ? fs.readFileSync(fileContent, "utf8")
+      : fileContent;
     const words = fileContentData
       .split(/\s+/)
       .filter((word) => word.length > 0);
     return words.length;
   } catch (error) {
-    console.log(`Error reading file: ${filename}`, error);
+    console.log(`Error reading file: ${fileContent}`, error);
   }
 }
 
-function countCharacters(filename) {
+function countCharacters(fileContent, isFile = true) {
   try {
-    const fileContentData = fs.readFileSync(filename, "utf8");
+    const fileContentData = isFile
+      ? fs.readFileSync(fileContent, "utf8")
+      : fileContent;
 
     // Check if the locale supports multibyte characters
     const isMultibyteSupported =
@@ -56,7 +60,7 @@ function countCharacters(filename) {
 
     return charactersCount;
   } catch (error) {
-    console.log(`Error reading file: ${filename}`, error);
+    console.log(`Error reading file: ${fileContent}`, error);
   }
 }
 
@@ -69,14 +73,17 @@ function handleCommandLineInput({ option, file, isFile = true }) {
       console.log(`${countLines(file, isFile)} ${isFile ? file : ""}`);
       break;
     case "-w":
-      console.log(`${countWords(file)} ${file}`);
+      console.log(`${countWords(file, isFile)} ${isFile ? file : ""}`);
       break;
     case "-m":
-      console.log(`${countCharacters(file)} ${file}`);
+      console.log(`${countCharacters(file, isFile)} ${isFile ? file : ""}`);
       break;
     default:
       console.log(
-        `${countLines(file)} ${countWords(file)} ${countBytes(file)} ${file}`
+        `${countLines(file, isFile)} ${countWords(file, isFile)} ${countBytes(
+          file,
+          isFile
+        )} ${isFile ? file : ""}`
       );
       break;
   }
@@ -86,9 +93,17 @@ function wcClone() {
   const args = process.argv.slice(2);
   let inputStream;
 
+  if (args.length === 0) {
+    console.log("Usage: wc [OPTION]... [FILE]...");
+    return;
+  }
+
   if (
     args.length === 1 &&
-    (args[0] === "-c" || args[0] === "-l" || args[0] === "-w")
+    (args[0] === "-c" ||
+      args[0] === "-l" ||
+      args[0] === "-w" ||
+      args[0] === "-m")
   ) {
     inputStream = process.stdin;
   }
