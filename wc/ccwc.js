@@ -59,19 +59,8 @@ function countCharacters(filename) {
 function wcClone() {
   const args = process.argv.slice(2);
 
-  if (
-    args.length !== 2 ||
-    (args[0] !== "-c" &&
-      args[0] !== "-l" &&
-      args[0] !== "-w" &&
-      args[0] !== "-m")
-  ) {
-    console.log("Usage: node ccwc.js -c|-l filename");
-    return;
-  }
-
   const option = args[0];
-  const filename = args[1];
+  const filename = args.length === 2 ? args[1] : args[0];
 
   switch (option) {
     case "-c":
@@ -85,6 +74,13 @@ function wcClone() {
       break;
     case "-m":
       console.log(`${countCharacters(filename)} ${filename}`);
+      break;
+    default:
+      console.log(
+        `${countLines(filename)} ${countWords(filename)} ${countBytes(
+          filename
+        )} ${filename}`
+      );
       break;
   }
 }
