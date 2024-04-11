@@ -37,12 +37,34 @@ function countWords(filename) {
   }
 }
 
+function countCharacters(filename) {
+  try {
+    const fileContentData = fs.readFileSync(filename, "utf8");
+
+    // Check if the locale supports multibyte characters
+    const isMultibyteSupported =
+      new Intl.PluralRules().resolvedOptions().maximumFractionDigits > 0;
+
+    // Count characters based on the locale
+    const charactersCount = isMultibyteSupported
+      ? [...fileContentData].length
+      : fileContentData.length;
+
+    return charactersCount;
+  } catch (error) {
+    console.log(`Error reading file: ${filename}`, error);
+  }
+}
+
 function wcClone() {
   const args = process.argv.slice(2);
 
   if (
     args.length !== 2 ||
-    (args[0] !== "-c" && args[0] !== "-l" && args[0] !== "-w")
+    (args[0] !== "-c" &&
+      args[0] !== "-l" &&
+      args[0] !== "-w" &&
+      args[0] !== "-m")
   ) {
     console.log("Usage: node ccwc.js -c|-l filename");
     return;
@@ -60,6 +82,9 @@ function wcClone() {
       break;
     case "-w":
       console.log(`${countWords(filename)} ${filename}`);
+      break;
+    case "-m":
+      console.log(`${countCharacters(filename)} ${filename}`);
       break;
   }
 }
