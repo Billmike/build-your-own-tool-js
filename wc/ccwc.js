@@ -1,17 +1,21 @@
 const fs = require("fs");
 
-function countBytes(filename) {
+function countBytes(filename, isFile = true) {
   try {
-    const stats = fs.statSync(filename);
-    return stats.size;
+    if (isFile) {
+      return fs.statSync(filename).size;
+    }
+    return Buffer.byteLength(filename, "utf8");
   } catch (error) {
     console.log(`Error reading file: ${filename}`, error);
   }
 }
 
-function countLines(filename) {
+function countLines(fileContent, isFile = true) {
   try {
-    const fileContentData = fs.readFileSync(filename, "utf8");
+    const fileContentData = isFile
+      ? fs.readFileSync(fileContent, "utf8")
+      : fileContent;
     let numberOfLines = fileContentData.split("\n").length;
 
     // Check if the last line is empty (no trailing newline)
@@ -21,7 +25,7 @@ function countLines(filename) {
 
     return numberOfLines;
   } catch (error) {
-    console.log(`Error reading file: ${filename}`, error);
+    console.log(`Error reading file: ${fileContent}`, error);
   }
 }
 
@@ -56,32 +60,55 @@ function countCharacters(filename) {
   }
 }
 
+function handleCommandLineInput({ option, file, isFile = true }) {
+  switch (option) {
+    case "-c":
+      console.log(`${countBytes(file, isFile)} ${isFile ? file : ""}`);
+      break;
+    case "-l":
+      console.log(`${countLines(file, isFile)} ${isFile ? file : ""}`);
+      break;
+    case "-w":
+      console.log(`${countWords(file)} ${file}`);
+      break;
+    case "-m":
+      console.log(`${countCharacters(file)} ${file}`);
+      break;
+    default:
+      console.log(
+        `${countLines(file)} ${countWords(file)} ${countBytes(file)} ${file}`
+      );
+      break;
+  }
+}
+
 function wcClone() {
   const args = process.argv.slice(2);
+  let inputStream;
+
+  if (
+    args.length === 1 &&
+    (args[0] === "-c" || args[0] === "-l" || args[0] === "-w")
+  ) {
+    inputStream = process.stdin;
+  }
 
   const option = args[0];
   const filename = args.length === 2 ? args[1] : args[0];
 
-  switch (option) {
-    case "-c":
-      console.log(`${countBytes(filename)} ${filename}`);
-      break;
-    case "-l":
-      console.log(`${countLines(filename)} ${filename}`);
-      break;
-    case "-w":
-      console.log(`${countWords(filename)} ${filename}`);
-      break;
-    case "-m":
-      console.log(`${countCharacters(filename)} ${filename}`);
-      break;
-    default:
-      console.log(
-        `${countLines(filename)} ${countWords(filename)} ${countBytes(
-          filename
-        )} ${filename}`
-      );
-      break;
+  if (inputStream) {
+    let input = "";
+    process.stdin.setEncoding("utf-8");
+    process.stdin.on("data", (chunk) => {
+      input += chunk;
+    });
+
+    process.stdin.on("end", () => {
+      const content = input.toString();
+      handleCommandLineInput({ option, file: content, isFile: false });
+    });
+  } else {
+    handleCommandLineInput({ option, file: filename });
   }
 }
 
