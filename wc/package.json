@@ -1,0 +1,16 @@
+{
+  "name": "wc",
+  "version": "1.0.0",
+  "description": "Inspired by John Crickett's Coding Challenge series, this challenge is to build my own version of the Unix command line tool wc!",
+  "main": "ccwc.js",
+  "scripts": {
+    "start": "node ccwc.js",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
