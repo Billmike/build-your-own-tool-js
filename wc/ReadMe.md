@@ -30,3 +30,11 @@ cat test.txt | node ccwc.js -l
 ```
 
 will print out the number of lines in the file `test.txt`
+
+### Tests
+
+Tests are written using Jest. To run the tests, execute the command in your terminal:
+
+```bash
+npm test
+```
