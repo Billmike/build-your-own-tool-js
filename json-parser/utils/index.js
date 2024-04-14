@@ -51,6 +51,64 @@ function lexer(jsonString) {
       continue;
     }
 
+    if (char === "t" || char === "f" || char === "T" || char === "F") {
+      let value = "";
+
+      while (trimString[current] !== "e") {
+        value += trimString[current];
+        current++;
+      }
+
+      if (value === "tru") {
+        tokens.push({ type: "BOOLEAN", value: true });
+        current++;
+        continue;
+      } else if (value === "fals") {
+        tokens.push({ type: "BOOLEAN", value: false });
+        current++;
+        continue;
+      } else {
+        tokens.push({
+          type: "INVALID TOKEN",
+          value: `INVALID TOKEN: Invalid boolean value provided. Value passed: ${value}e, Expected value: ${
+            value === "Fals" ? false : true
+          }`,
+        });
+        current++;
+        continue;
+      }
+    }
+
+    if (char === "n") {
+      let value = "";
+
+      while (trimString[current] !== "l") {
+        value += trimString[current];
+        current++;
+      }
+
+      if (value === "nu") {
+        tokens.push({ type: "NULL", value: null });
+        current += 2;
+        continue;
+      }
+    }
+
+    if (typeof parseInt(char) === "number") {
+      let value = "";
+
+      while (
+        typeof parseInt(trimString[current]) === "number" &&
+        !isNaN(trimString[current])
+      ) {
+        value += trimString[current].toString();
+        current++;
+      }
+
+      tokens.push({ type: "NUMBER", value: parseInt(value) });
+      continue;
+    }
+
     throw new Error("Invalid character: " + char);
   }
 
@@ -59,11 +117,12 @@ function lexer(jsonString) {
 
 function parser(tokens) {
   let current = 0;
+  const allowedTypes = ["STRING", "NUMBER", "BOOLEAN", "NULL"];
 
   function walk() {
     let token = tokens[current];
 
-    if (token.type === "LBRACE") {
+    if (token && token.type === "LBRACE") {
       let node = { type: "Object", children: [] };
       token = tokens[++current];
 
@@ -75,17 +134,21 @@ function parser(tokens) {
           if (token.type === "COLON") {
             token = tokens[++current];
 
-            if (token.type === "STRING") {
+            if (allowedTypes.includes(token.type)) {
               let value = token.value;
               node.children.push({ key, value });
+            } else if (token.type === "INVALID TOKEN") {
+              return { type: token.value };
             } else {
-              throw new Error("Invalid JSON: Expected STRING after COLON");
+              return {
+                type: "Invalid JSON: Expected STRING, NUMBER, BOOLEAN or NULL as value after COLON",
+              };
             }
           } else {
-            throw new Error("Invalid JSON: Expected COLON after STRING");
+            return { type: "Invalid JSON: Expected COLON after key" };
           }
         } else {
-          throw new Error("Invalid JSON: Expected STRING as key");
+          return { type: "Invalid JSON: Expected STRING as key" };
         }
 
         token = tokens[++current];
@@ -94,17 +157,19 @@ function parser(tokens) {
           token = tokens[++current];
 
           if (token.type !== "STRING") {
-            throw new Error("Invalid JSON: Expected STRING after COMMA");
+            return { type: "Invalid JSON: Expected STRING after COMMA" };
           }
         } else if (token.type !== "RBRACE") {
-          throw new Error(
-            "Invalid JSON: Unexpected token after key-value pair"
-          );
+          return {
+            type: "Invalid JSON: Unexpected token after key-value pair",
+          };
         }
       }
 
       return node;
     }
+
+    return { type: "Invalid JSON" };
   }
 
   return walk();
